@@ -1,0 +1,7 @@
+cargo:rerun-if-changed=/mnt/c/Users/ameow/swim/bare-metal-swim/Cargo.toml
+cargo:rustc-link-search=native=/mnt/c/Users/ameow/swim/bare-metal-swim/target/bootimage/bootloader/x86_64-bootloader/release/build/bootloader-45705ba959b703b7/out
+cargo:rustc-link-lib=static=kernel_bin-simple_swim_template
+cargo:rerun-if-env-changed=KERNEL
+cargo:rerun-if-env-changed=KERNEL_MANIFEST
+cargo:rerun-if-changed=/mnt/c/Users/ameow/swim/bare-metal-swim/target/x86_64-blog_os/debug/simple_swim_template
+cargo:rerun-if-changed=build.rs

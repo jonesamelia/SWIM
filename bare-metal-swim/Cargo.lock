@@ -9,6 +9,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ace50bade8e6234aa140d9a2f552bbee1db4d353f69b8217bc503490fc1a9f26"
 
 [[package]]
+name = "bare_metal_deque"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "910b30e0f760b666a2973b9914e867988a566fec2fef12bf4e64ad65ccfccf89"
+
+[[package]]
+name = "bare_metal_map"
+version = "0.1.0"
+source = "git+https://github.com/gjf2a/bare_metal_map#91c0d594fa0d70c51ca2aa769302ee79f23e45a9"
+
+[[package]]
 name = "bit_field"
 version = "0.10.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -33,6 +44,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8a9c8b93781debeb5bc44a12adc4be812aa9feb659d60eeafcd7e9bedb549561"
 
 [[package]]
+name = "compiler_builtins"
+version = "0.1.156"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c1ffbd2789fe5bb95b96a2e22cbe3128239dc46ff0374e0d38e9f102062d7055"
+
+[[package]]
 name = "crossbeam"
 version = "0.8.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -46,6 +63,23 @@ name = "crossbeam-utils"
 version = "0.8.21"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d0a5c400df2834b80a4c3327b3aad3a4c4cd4de0629063962b03235697506a28"
+
+[[package]]
+name = "file_system_template"
+version = "0.1.0"
+source = "git+https://github.com/jonesamelia/file_system_template#145a10eba65129615460ea782ab7a232d1febac1"
+dependencies = [
+ "ramdisk",
+ "thiserror-no-std",
+]
+
+[[package]]
+name = "gc_headers"
+version = "0.6.1"
+source = "git+https://github.com/gjf2a/gc_headers#d136999ea8beaafcd33fa213390b996ca8ed6e6d"
+dependencies = [
+ "thiserror-no-std",
+]
 
 [[package]]
 name = "lazy_static"
@@ -159,6 +193,32 @@ dependencies = [
 ]
 
 [[package]]
+name = "proc-macro2"
+version = "1.0.95"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "02b3e5e68a3a1a02aad3ec490a98007cbc13c37cbe84a3cd7b8e406d76e7f778"
+dependencies = [
+ "unicode-ident",
+]
+
+[[package]]
+name = "quote"
+version = "1.0.40"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1885c039570dc00dcb4ff087a89e185fd56bae234ddc7f056a945bf36467248d"
+dependencies = [
+ "proc-macro2",
+]
+
+[[package]]
+name = "ramdisk"
+version = "0.4.0"
+source = "git+https://github.com/gjf2a/ramdisk#f57ea220c98d1a92a2bf12c74c98e1ce3eecb0e3"
+dependencies = [
+ "thiserror-no-std",
+]
+
+[[package]]
 name = "raw-cpuid"
 version = "10.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -180,14 +240,30 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "94143f37725109f92c262ed2cf5e59bce7498c01bcc1502d7b9afe439a4e9f49"
 
 [[package]]
+name = "simple_interp"
+version = "0.4.4"
+source = "git+https://github.com/gjf2a/simple_interp#93762900064e4db328a471d27f8028424e06a703"
+dependencies = [
+ "bare_metal_deque",
+ "bare_metal_map",
+ "gc_headers",
+ "thiserror-no-std",
+]
+
+[[package]]
 name = "simple_swim_template"
 version = "0.1.0"
 dependencies = [
  "bootloader",
+ "compiler_builtins",
  "crossbeam",
+ "file_system_template",
+ "gc_headers",
  "num",
  "pc-keyboard",
  "pluggable_interrupt_os",
+ "ramdisk",
+ "simple_interp",
 ]
 
 [[package]]
@@ -200,6 +276,37 @@ dependencies = [
 ]
 
 [[package]]
+name = "syn"
+version = "1.0.109"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "72b64191b275b66ffe2469e8af2c1cfe3bafa67b529ead792a6d0160888b4237"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "unicode-ident",
+]
+
+[[package]]
+name = "thiserror-impl-no-std"
+version = "2.0.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "58e6318948b519ba6dc2b442a6d0b904ebfb8d411a3ad3e07843615a72249758"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
+name = "thiserror-no-std"
+version = "2.0.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a3ad459d94dd517257cc96add8a43190ee620011bb6e6cdc82dafd97dfafafea"
+dependencies = [
+ "thiserror-impl-no-std",
+]
+
+[[package]]
 name = "uart_16550"
 version = "0.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -209,6 +316,12 @@ dependencies = [
  "rustversion",
  "x86",
 ]
+
+[[package]]
+name = "unicode-ident"
+version = "1.0.18"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5a5f39404a5da50712a4c1eecf25e90dd62b613502b7e925fd4e4d19b5c96512"
 
 [[package]]
 name = "volatile"

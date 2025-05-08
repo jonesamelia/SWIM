@@ -31,7 +31,7 @@ const WIN_WIDTH: usize = (WIN_REGION_WIDTH - 3) / 2;
 
 
 pub struct SwimInterface {
-    text: [[char; 38]; 10],
+    text: [[char; 40]; 39],
     num_letters: usize,
     next_letter: usize,
     cursorx: usize,
@@ -45,7 +45,8 @@ pub struct SwimInterface {
     active: bool,
     file_sys: FileSystem<MAX_OPEN, BLOCK_SIZE, NUM_BLOCKS, MAX_FILE_BLOCKS, MAX_FILE_BYTES, MAX_FILES_STORED, MAX_FILENAME_BYTES>,
     displaying_files: bool,
-    active_file: usize
+    active_file: usize,
+    topi: usize
 }
 
 
@@ -62,7 +63,7 @@ impl Default for Swim{
             windows: [SwimInterface::default(), SwimInterface::default(), SwimInterface::default(), SwimInterface::default()],
             init: false,
             active_win: 0,
-            displaying_files: true
+            displaying_files: false
         }
     }
 }
@@ -82,7 +83,7 @@ pub fn sub1<const LIMIT: usize>(value: usize) -> usize {
 impl Default for SwimInterface {
     fn default() -> Self {
         Self {
-            text: [[' '; 38]; 10],
+            text: [[' '; 40]; 39],
             num_letters: 1,
             next_letter: 1,
             cursorx: 1,
@@ -95,8 +96,9 @@ impl Default for SwimInterface {
             init: false,
             active: false,
             file_sys: FileSystem::new(RamDisk::new()),
-            displaying_files: true,
-            active_file: 0
+            displaying_files: false,
+            active_file: 0,
+            topi: 0
 
         }
     }
@@ -169,10 +171,47 @@ impl Swim{
                 }
             }
             KeyCode::ArrowLeft => {
-                self.windows[self.active_win].change_active_file(false);
+                if self.displaying_files{
+                    self.windows[self.active_win].change_active_file(false);    
+                } 
+                else{
+                    self.windows[self.active_win].sidescroll(false);
+                }
             }
             KeyCode::ArrowRight => {
-                self.windows[self.active_win].change_active_file(true);
+                if self.displaying_files{
+                    self.windows[self.active_win].change_active_file(true);    
+                }  
+                else{
+                    self.windows[self.active_win].sidescroll(true);
+                }
+            }
+            KeyCode::ArrowUp => {
+                if self.displaying_files{
+                    self.windows[self.active_win].change_active_file(true);    
+                }  
+                else{
+                    self.windows[self.active_win].verticalscroll(false);
+                }
+            }
+            KeyCode::ArrowDown => {
+                if self.displaying_files{
+                    self.windows[self.active_win].change_active_file(true);    
+                }  
+                else{
+                    self.windows[self.active_win].verticalscroll(true);
+                }
+            }
+            KeyCode::Backspace => {
+                if !self.displaying_files{
+                    self.windows[self.active_win].backspace();
+                    plot_str("help me", 20, 10, ColorCode::new(Color::White, Color::Magenta));
+                }
+            }
+            KeyCode::Delete => {
+                if !self.displaying_files{
+                    self.windows[self.active_win].backspace();
+                }
             }
             _ => {}
         }
@@ -183,9 +222,12 @@ impl Swim{
             '\n' =>{
                 if !self.displaying_files{
                     self.windows[self.active_win].enter();    
+                }  
+            }
+            '\u{08}' | '\u{7f}' => {
+                if !self.displaying_files{
+                    self.windows[self.active_win].backspace();
                 }
-                
-                
             }
             _ =>{
                 if is_drawable(key) {
@@ -206,6 +248,9 @@ impl SwimInterface {
         if self.cursory != self.starty + self.height - 1{
             plot(' ', self.cursorx, self.cursory, ColorCode::new(Color::Black, Color::Black));
             self.move_cursor(self.startx, self.cursory + 1);
+        }else{
+            self.topi += 1;
+            self.printscreen();
         }
     }
 
@@ -215,8 +260,8 @@ impl SwimInterface {
         self.cursory = self.starty;
         self.normal_border();
         self.init = true;
-        self.create_files();
-        self.display_files();
+        //self.create_files();
+        //self.display_files();
     }
 
     fn create_files(&mut self){
@@ -347,7 +392,7 @@ print((4 * sum))"#.as_bytes()).unwrap();
         //self.text[self.cursory] = self.text[self.cursory] + key;
         if self.cursory < self.starty + self.height && self.cursorx < self.startx + self.width{
             plot(key, self.cursorx, self.cursory, ColorCode::new(Color::Cyan, Color::Black));
-
+            self.text[self.cursorx - self.startx][self.cursory - self.starty + self.topi] = key;
                     if self.cursorx < self.startx + self.width - 1{
                         self.cursorx += 1;
                     }
@@ -356,14 +401,75 @@ print((4 * sum))"#.as_bytes()).unwrap();
                             self.move_cursor(self.startx, self.cursory + 1); 
                             self.show_cursor();   
                         }
-                        
-                        
                     }
                     
         }
         
     }
 
+    fn backspace(&mut self){
+        if self.cursorx == self.startx && self.cursory != self.starty{
+            plot(' ', self.cursorx, self.cursory, ColorCode::new(Color::Black, Color::Black));
+            self.move_cursor(self.startx + self.width - 1, self.cursory -1);
+        }
+        else if self.cursorx != self.startx {
+            plot(' ', self.cursorx, self.cursory, ColorCode::new(Color::Black, Color::Black));
+            self.move_cursor(self.cursorx - 1,self.cursory);
+            self.show_cursor();
+            self.text[self.cursorx - self.startx][self.cursory - self.starty + self.topi] = ' ';
+        }
+    }
+    fn sidescroll(&mut self, pos: bool){
+        let mut newx = self.cursorx;
+        if pos{ 
+            if self.cursorx != self.startx + self.width - 1{
+                newx += 1;
+            }
+            else{newx = self.startx;}
+        }
+        else{ 
+            if self.cursorx != self.startx{ 
+                newx -= 1;    
+            }
+            else{
+                newx = self.startx + self.width - 1;
+            }
+        }   
+        plot(self.text[self.cursorx - self.startx][self.cursory - self.starty + self.topi], self.cursorx, self.cursory, ColorCode::new(Color::Cyan, Color::Black));
+        self.move_cursor(newx, self.cursory);
+    }
+    fn verticalscroll(&mut self, pos:bool){
+        let mut newy = self.cursory;
+        if pos{ 
+            if self.cursory != self.starty + self.height - 1{
+                newy += 1;
+                plot(self.text[self.cursorx - self.startx][self.cursory - self.starty + self.topi], self.cursorx, self.cursory, ColorCode::new(Color::Cyan, Color::Black));
+                self.move_cursor(self.cursorx, newy);
+            }
+            else if self.topi != 40 - self.height{
+                self.topi += 1;
+                self.printscreen();
+            }
+        }
+        else{ 
+            if self.cursory != self.starty{ 
+                newy -= 1; 
+                plot(self.text[self.cursorx - self.startx][self.cursory - self.starty + self.topi], self.cursorx, self.cursory, ColorCode::new(Color::Cyan, Color::Black));
+                self.move_cursor(self.cursorx, newy);   
+            }
+            else if self.topi != 0{
+                self.topi -= 1;
+                self.printscreen();
+            }
+        }   
+    }
+    fn printscreen(&mut self){
+        for x in self.startx..self.startx + self.width - 1{
+            for y in self.starty..self.starty + self.height{
+                plot(self.text[x - self.startx][y - self.starty + self.topi], x, y, ColorCode::new(Color::Cyan, Color::Black));
+            }
+        }
+    }
     fn move_cursor(&mut self, x: usize, y:usize){
         self.cursorx = x;
         self.cursory = y;
